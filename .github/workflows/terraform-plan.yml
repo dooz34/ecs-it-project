@@ -1,6 +1,6 @@
-name: Terraform Apply
+name: Terraform Plan
 on:
-  push:
+  pull_request:
     branches: [main]
     paths:
       - 'terraform/**'
@@ -9,7 +9,7 @@ permissions:
   id-token: write
   contents: read
 jobs:
-  apply:
+  plan:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -26,16 +26,14 @@ jobs:
         uses: hashicorp/setup-terraform@v3
       - name: Terraform Init
         run: terraform init
-      - name: Terraform Apply
-        run: terraform apply -auto-approve -var="container_image=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/ecs-portfolio:latest"
-      - name: Post-deploy health check
-        run: |
-          echo "Waiting for ECS service and ALB to settle..."
-          sleep 30
-          URL="https://${{ secrets.APP_DOMAIN }}/"
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
-          if [ "$STATUS" -ne 200 ]; then
-            echo "Health check FAILED - $URL returned $STATUS"
-            exit 1
-          fi
-          echo "Health check passed - $URL returned $STATUS"
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+      - name: Terraform Validate
+        run: terraform validate
+      - name: Scan Terraform with Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: terraform
+          soft_fail: true
+      - name: Terraform Plan
+        run: terraform plan -var="container_image=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/ecs-portfolio:latest"
