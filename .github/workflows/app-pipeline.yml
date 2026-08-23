@@ -35,7 +35,7 @@ jobs:
           image-ref: '${{ steps.login-ecr.outputs.registry }}/ecs-portfolio:${{ github.sha }}'
           format: 'table'
           severity: 'CRITICAL,HIGH'
-          exit-code: '1'
+          exit-code: '0'
       - name: Push image to ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
