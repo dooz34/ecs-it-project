@@ -30,12 +30,23 @@ jobs:
         run: terraform apply -auto-approve -var="container_image=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/ecs-portfolio:latest"
       - name: Post-deploy health check
         run: |
-          echo "Waiting for ECS service and ALB to settle..."
-          sleep 30
           URL="https://${{ secrets.APP_DOMAIN }}/"
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
-          if [ "$STATUS" -ne 200 ]; then
-            echo "Health check FAILED - $URL returned $STATUS"
-            exit 1
-          fi
-          echo "Health check passed - $URL returned $STATUS"
+          MAX_ATTEMPTS=10
+          SLEEP_SECONDS=15
+
+          echo "Waiting for DNS, ALB, and ECS service to settle..."
+
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$URL" || echo "000")
+
+            if [ "$STATUS" = "200" ]; then
+              echo "Health check passed - $URL returned $STATUS (attempt $i/$MAX_ATTEMPTS)"
+              exit 0
+            fi
+
+            echo "Attempt $i/$MAX_ATTEMPTS: $URL not ready yet (status: $STATUS). Retrying in ${SLEEP_SECONDS}s..."
+            sleep $SLEEP_SECONDS
+          done
+
+          echo "Health check FAILED after $MAX_ATTEMPTS attempts - $URL never returned 200"
+          exit 1
