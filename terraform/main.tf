@@ -3,17 +3,17 @@ data "aws_route53_zone" "main" {
 }
 data "aws_lb_hosted_zone_id" "main" {}
 module "vpc" {
-  source = "./modules/vpc"
+  source       = "./modules/vpc"
   project_name = var.project_name
 }
 module "acm" {
-  source = "./modules/acm"
+  source         = "./modules/acm"
   project_name   = var.project_name
   domain_name    = var.domain_name
   hosted_zone_id = data.aws_route53_zone.main.zone_id
 }
 module "alb" {
-  source = "./modules/alb"
+  source            = "./modules/alb"
   project_name      = var.project_name
   vpc_id            = module.vpc.vpc_id
   public_subnet_ids = module.vpc.public_subnet_ids
@@ -21,7 +21,7 @@ module "alb" {
   certificate_arn   = module.acm.certificate_arn
 }
 module "ecs" {
-  source = "./modules/ecs"
+  source                = "./modules/ecs"
   project_name          = var.project_name
   aws_region            = var.aws_region
   vpc_id                = module.vpc.vpc_id
@@ -32,7 +32,7 @@ module "ecs" {
   target_group_arn      = module.alb.target_group_arn
 }
 module "route53" {
-  source = "./modules/route53"
+  source         = "./modules/route53"
   hosted_zone_id = data.aws_route53_zone.main.zone_id
   domain_name    = var.domain_name
   alb_dns_name   = module.alb.alb_dns_name
