@@ -82,6 +82,7 @@ data "aws_iam_policy_document" "permissions" {
       "iam:PutRolePolicy", "iam:DeleteRolePolicy", "iam:GetRole",
       "iam:GetRolePolicy", "iam:UpdateAssumeRolePolicy",
       "iam:TagRole", "iam:ListRolePolicies", "iam:ListAttachedRolePolicies",
+      "iam:ListInstanceProfilesForRole",
       "iam:CreatePolicy", "iam:DeletePolicy", "iam:GetPolicy",
       "iam:GetPolicyVersion", "iam:ListPolicyVersions",
       "iam:GetOpenIDConnectProvider", "iam:ListOpenIDConnectProviders",
